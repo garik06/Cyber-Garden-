@@ -19,39 +19,39 @@ static uint8_t beacon_uuid[16] = {
     0x07, 0x64, 0x78, 0x25
 };
 
-// Формирование manufacturer данных (iBeacon packet)
+
 static uint8_t manufacturer_data[25]; 
 
 static void init_ibeacon_data(uint16_t major, uint16_t minor, int8_t tx_power) {
     int idx = 0;
     
-    // Apple Company ID: 0x004C
+ 
     manufacturer_data[idx++] = 0x4C;
     manufacturer_data[idx++] = 0x00;
     
-    // iBeacon Type (0x02) и Length (0x15)
+
     manufacturer_data[idx++] = 0x02;
     manufacturer_data[idx++] = 0x15;
     
-    // UUID (16 байт)
+
     memcpy(&manufacturer_data[idx], beacon_uuid, 16);
     idx += 16;
     
-    // Major (Big Endian)
+
     manufacturer_data[idx++] = (uint8_t)(major >> 8);
     manufacturer_data[idx++] = (uint8_t)(major & 0xFF);
     
-    // Minor (Big Endian)
+   
     manufacturer_data[idx++] = (uint8_t)(minor >> 8);
     manufacturer_data[idx++] = (uint8_t)(minor & 0xFF);
     
-    // Measured Power (Tx Power)
+  
     manufacturer_data[idx++] = tx_power;
 }
 
 static esp_ble_adv_params_t adv_params = {
-    .adv_int_min = 0x20, // 20 мс
-    .adv_int_max = 0x40, // 40 мс
+    .adv_int_min = 0x20, 
+    .adv_int_max = 0x40, 
     .adv_type = ADV_TYPE_NONCONN_IND,
     .own_addr_type = BLE_ADDR_TYPE_PUBLIC,
     .channel_map = ADV_CHNL_ALL,
@@ -62,7 +62,7 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
 {
     switch (event) {
     case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
-        // После установки данных, начинаем рекламу
+        
         esp_ble_gap_start_advertising(&adv_params);
         break;
     case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
@@ -95,15 +95,14 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_bluedroid_init());
     ESP_ERROR_CHECK(esp_bluedroid_enable());
 
-    // Регистрация GAP callback
+
     ESP_ERROR_CHECK(esp_ble_gap_register_callback(esp_gap_cb));
 
-    // Настроим iBeacon данные
-    // Major=0x0001 (Beacon 1), Minor=0x0001, TxPower=-42 dBm
+
     ESP_LOGI(TAG, "Setting up iBeacon data: Major=0x0001, Minor=0x0001, TxPower=-42");
     init_ibeacon_data(0x0001, 0x0001, -42);
 
-    // Упаковываем рекламу
+
     esp_ble_adv_data_t adv_data = {
         .set_scan_rsp = false,
         .include_name = false,
@@ -117,10 +116,10 @@ void app_main(void)
         .p_service_data = NULL,
         .service_uuid_len = 0,
         .p_service_uuid = NULL,
-        // Используем 0x06 для совместимости с вашей версией SDK (GEN_DISC | NO_BREDR)
+     
         .flag = 0x06, 
     };
 
-    // Задаем данные для рекламы
     ESP_ERROR_CHECK(esp_ble_gap_config_adv_data(&adv_data));
+
 }

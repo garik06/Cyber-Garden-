@@ -11,7 +11,7 @@
 
 static const char *TAG = "Beacon2";
 
-// iBeacon UUID
+
 static uint8_t beacon_uuid[16] = {
     0xFD, 0xA5, 0x06, 0x93,
     0xA4, 0xE2, 0x4F, 0xB1,
@@ -19,22 +19,22 @@ static uint8_t beacon_uuid[16] = {
     0x07, 0x64, 0x78, 0x25
 };
 
-// Формирование manufacturer данных вручную (iBeacon packet)
-static uint8_t manufacturer_data[25]; // Уменьшено до точного размера
+
+static uint8_t manufacturer_data[25]; 
 
 static void init_ibeacon_data(uint16_t major, uint16_t minor, int8_t tx_power) {
     int idx = 0;
-    manufacturer_data[idx++] = 0x4C;  // Apple Company ID (Little Endian)
+    manufacturer_data[idx++] = 0x4C;  
     manufacturer_data[idx++] = 0x00;
-    manufacturer_data[idx++] = 0x02;  // iBeacon type
-    manufacturer_data[idx++] = 0x15;  // iBeacon length
+    manufacturer_data[idx++] = 0x02;  
+    manufacturer_data[idx++] = 0x15;  
     memcpy(&manufacturer_data[idx], beacon_uuid, 16);
     idx += 16;
-    manufacturer_data[idx++] = (major >> 8) & 0xFF;  // Major (Big Endian)
+    manufacturer_data[idx++] = (major >> 8) & 0xFF;  
     manufacturer_data[idx++] = major & 0xFF;
-    manufacturer_data[idx++] = (minor >> 8) & 0xFF;  // Minor (Big Endian)
+    manufacturer_data[idx++] = (minor >> 8) & 0xFF;  
     manufacturer_data[idx++] = minor & 0xFF;
-    manufacturer_data[idx++] = tx_power;  // Tx Power
+    manufacturer_data[idx++] = tx_power;  
 
     // Отладочный лог для проверки данных
     char data_str[75];
@@ -45,7 +45,7 @@ static void init_ibeacon_data(uint16_t major, uint16_t minor, int8_t tx_power) {
     ESP_LOGI(TAG, "Manufacturer data: %s", data_str);
 }
 
-// Callback GAP
+
 static void gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
     switch (event) {
         case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
@@ -97,11 +97,11 @@ void app_main(void) {
     ESP_ERROR_CHECK(esp_bluedroid_enable());
     ESP_LOGI(TAG, "Bluedroid enabled");
 
-    // Настроим iBeacon данные
-    ESP_LOGI(TAG, "Setting up iBeacon data: Major=0x0002, Minor=0x0001, TxPower=-70");
-    init_ibeacon_data(0x0002, 0x0001, -70);  // TX_POWER скорректирован
 
-    // Упаковываем рекламу
+    ESP_LOGI(TAG, "Setting up iBeacon data: Major=0x0002, Minor=0x0001, TxPower=-70");
+    init_ibeacon_data(0x0002, 0x0001, -70);  
+
+   
     esp_ble_adv_data_t adv_data = {
         .set_scan_rsp = false,
         .include_name = false,
@@ -109,24 +109,24 @@ void app_main(void) {
         .min_interval = 0x20,
         .max_interval = 0x40,
         .appearance = 0,
-        .manufacturer_len = 25,  // Точный размер данных
+        .manufacturer_len = 25,  
         .p_manufacturer_data = manufacturer_data,
         .service_data_len = 0,
         .p_service_data = NULL,
         .service_uuid_len = 0,
         .p_service_uuid = NULL,
-        .flag = 0,  // Убраны флаги, чтобы не превышать лимит
+        .flag = 0,  
     };
 
-    // Запускаем GAP callback
+
     ESP_LOGI(TAG, "Registering GAP callback");
     ESP_ERROR_CHECK(esp_ble_gap_register_callback(gap_cb));
 
-    // Конфигурируем данные рекламы
+
     ESP_LOGI(TAG, "Configuring advertising data");
     ESP_ERROR_CHECK(esp_ble_gap_config_adv_data(&adv_data));
 
-    // Устанавливаем имя маяка (для отладки)
+
     ESP_LOGI(TAG, "Setting device name to Beacon2");
     ESP_ERROR_CHECK(esp_ble_gap_set_device_name("Beacon2"));
 
@@ -134,4 +134,5 @@ void app_main(void) {
     while (1) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
+
 }

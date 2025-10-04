@@ -11,10 +11,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
-#include "esp_bt.h"             // Добавлено для BLE
-#include "esp_gap_ble_api.h"    // Добавлено для BLE
-#include "esp_bt_main.h"        // Добавлено для BLE
-#include "esp_bt_device.h"      // Добавлено для BLE
+#include "esp_bt.h"             
+#include "esp_gap_ble_api.h"    
+#include "esp_bt_main.h"        
+#include "esp_bt_device.h"      
 
 static const char *TAG = "WiFiServer";
 
@@ -22,7 +22,7 @@ static const char *TAG = "WiFiServer";
 #define WIFI_PASS "ESPSERVER"
 #define MAX_STA_CONN 4
 
-// iBeacon для сервера (как Beacon3)
+
 static uint8_t beacon_uuid[16] = {
     0xFD, 0xA5, 0x06, 0x93,
     0xA4, 0xE2, 0x4F, 0xB1,
@@ -33,17 +33,17 @@ static uint8_t manufacturer_data[25];
 
 static void init_ibeacon_data(uint16_t major, uint16_t minor, int8_t tx_power) {
     int idx = 0;
-    manufacturer_data[idx++] = 0x4C;  // Apple Company ID
+    manufacturer_data[idx++] = 0x4C;  
     manufacturer_data[idx++] = 0x00;
-    manufacturer_data[idx++] = 0x02;  // iBeacon type
-    manufacturer_data[idx++] = 0x15;  // iBeacon length
+    manufacturer_data[idx++] = 0x02;  
+    manufacturer_data[idx++] = 0x15;  
     memcpy(&manufacturer_data[idx], beacon_uuid, 16);
     idx += 16;
-    manufacturer_data[idx++] = (major >> 8) & 0xFF;  // Major
+    manufacturer_data[idx++] = (major >> 8) & 0xFF;  
     manufacturer_data[idx++] = major & 0xFF;
-    manufacturer_data[idx++] = (minor >> 8) & 0xFF;  // Minor
+    manufacturer_data[idx++] = (minor >> 8) & 0xFF;  
     manufacturer_data[idx++] = minor & 0xFF;
-    manufacturer_data[idx++] = tx_power;  // Tx Power
+    manufacturer_data[idx++] = tx_power;  
 }
 
 static esp_ble_adv_params_t adv_params = {
@@ -98,7 +98,7 @@ const char* get_html_page()
         "Status: <span id='status-box'>Unknown</span><br>"
         "Timestamp: <span id='timestamp'>--</span>"
     "</div>"
-    "<h2>Position Map (X: 0-80sm, Y: 0-50sm)</h2>"  // Масштаб можно изменить, если зона меньше
+    "<h2>Position Map (X: 0-80sm, Y: 0-50sm)</h2>"  
     "<canvas id='map-canvas' width='800' height='100'></canvas>"
 "<script>"
 "const positionEl = document.getElementById('position');"
@@ -200,7 +200,7 @@ void wifi_init_ap(void) {
     ESP_LOGI(TAG, "wifi_init_ap finished. SSID:%s password:%s channel:%d", WIFI_SSID, WIFI_PASS, 1);
 }
 
-// Добавлено: Инициализация BLE для маяка
+// Инициализация BLE для маяка
 static void ble_init_beacon(void) {
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
@@ -211,7 +211,7 @@ static void ble_init_beacon(void) {
 
     ESP_ERROR_CHECK(esp_ble_gap_register_callback(gap_cb));
 
-    // Настроим iBeacon данные: Major=0x0003, Minor=0x0001, TxPower=-59
+    
     init_ibeacon_data(0x0003, 0x0001, -59);
 
     esp_ble_adv_data_t adv_data = {
@@ -319,7 +319,7 @@ void app_main(void)
     
     wifi_init_ap();
 
-    // Добавлено: Запуск BLE маяка
+    // Запуск BLE маяка
     ble_init_beacon();
 
     httpd_handle_t server = NULL;
@@ -361,4 +361,5 @@ void app_main(void)
     httpd_register_uri_handler(server, &root_uri);
 
     ESP_LOGI(TAG, "Server configuration complete. Access at http://192.168.4.1");
+
 }

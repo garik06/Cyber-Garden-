@@ -1,0 +1,24 @@
+{
+	"folders": [
+		{
+			"path": "../../esp_ble_beacon_two"
+		},
+		{
+			"name": "esp_beacon_2",
+			"path": "../../esp_beacon_2"
+		},
+		{
+			"name": "esp32_hum",
+			"path": "../../esp32_hum"
+		},
+		{
+			"name": "esp32_server",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"freertos.h": "c"
+		}
+	}
+}

@@ -18,12 +18,12 @@
 
 static const char *TAG = "MOBILE";
 
-// --- Конфигурация сети и сервера ---
+
 #define WIFI_SSID "ESPSERVER"
 #define WIFI_PASS "ESPSERVER"
 #define SERVER_URL "http://192.168.4.1" // Базовый URL сервера
 
-// --- Конфигурация BLE и позиционирования ---
+
 #define BEACON1_MAJOR 0x0001
 #define BEACON2_MAJOR 0x0002
 #define BEACON3_MAJOR 0x0003  // Новый маяк (сервер)
@@ -36,7 +36,7 @@ static const char *TAG = "MOBILE";
 #define BUZZER_PIN GPIO_NUM_2 // Пин для подключения зуммера
 #define RSSI_AVG_WINDOW 5 // Размер окна для moving average RSSI
 
-// Глобальные переменные для Wi-Fi и данных с маяков
+
 static EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 
@@ -47,14 +47,14 @@ typedef struct {
     int rssi_count1, rssi_count2, rssi_count3;
 } beacon_data_t;
 
-// Инициализируем со значениями, указывающими на отсутствие сигнала
+
 static beacon_data_t beacons = { 
     .rssi1 = -100, .rssi2 = -100, .rssi3 = -100, 
     .last_seen1 = 0, .last_seen2 = 0, .last_seen3 = 0,
     .rssi_count1 = 0, .rssi_count2 = 0, .rssi_count3 = 0
 };
 
-// Функция для moving average RSSI
+
 static int average_rssi(int *history, int count, int new_rssi) {
     if (count < RSSI_AVG_WINDOW) {
         history[count++] = new_rssi;
@@ -78,9 +78,9 @@ static double calculate_distance(int rssi, int tx_power) {
     return distance;
 }
 
-// Функция трилатерации для 3 маяков (least-squares approximation)
+// Функция трилатерации для 3 маяков 
 static void trilaterate_position(double *x, double *y, double d1, double d2, double d3) {
-    // Beacon1 (0,0), Beacon2 (BEACON_DIST_M, 0), Beacon3 (BEACON3_X, BEACON3_Y)
+ 
     double A = 2 * BEACON_DIST_M - 2 * 0;
     double B = 2 * 0 - 2 * 0;
     double C = pow(d1, 2) - pow(d2, 2) + pow(BEACON_DIST_M, 2) - pow(0, 2) + pow(0, 2) - pow(0, 2);
@@ -89,7 +89,7 @@ static void trilaterate_position(double *x, double *y, double d1, double d2, dou
     double F = pow(d2, 2) - pow(d3, 2) + pow(BEACON3_X, 2) - pow(BEACON_DIST_M, 2) + pow(BEACON3_Y, 2) - pow(0, 2);
     
     double denom = A * E - B * D;
-    if (fabs(denom) < 1e-6) { // Коллинеарны, fallback на 2 маяка
+    if (fabs(denom) < 1e-6) { 
         *x = (pow(d1, 2) - pow(d2, 2) + pow(BEACON_DIST_M, 2)) / (2 * BEACON_DIST_M);
         double y_squared = pow(d1, 2) - pow(*x, 2);
         *y = (y_squared > 0) ? sqrt(y_squared) : 0.0;
@@ -99,7 +99,7 @@ static void trilaterate_position(double *x, double *y, double d1, double d2, dou
     *y = (A * F - C * D) / denom;
 }
 
-// Callback-функция для обработки результатов BLE сканирования
+
 static void ble_scan_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
     if (event == ESP_GAP_BLE_SCAN_RESULT_EVT) {
         esp_ble_gap_cb_param_t *scan_result = (esp_ble_gap_cb_param_t *)param;
@@ -113,7 +113,7 @@ static void ble_scan_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *pa
                 if (len == 0) break;
                 uint8_t type = adv_data[i + 1];
                 
-                if (type == 0xFF && len >= 25) { // Manufacturer specific data
+                if (type == 0xFF && len >= 25) { 
                     if (adv_data[i+2] == 0x4C && adv_data[i+3] == 0x00 && adv_data[i+4] == 0x02 && adv_data[i+5] == 0x15) {
                         char uuid_str[33];
                         for (int j = 0; j < 16; j++) {
@@ -151,7 +151,7 @@ static void ble_init_scanner(void) {
     ESP_ERROR_CHECK(esp_bt_controller_init(&bt_cfg));
     ESP_ERROR_CHECK(esp_bt_controller_enable(ESP_BT_MODE_BLE));
 
-    // Использование современной функции для инициализации Bluedroid
+
     esp_bluedroid_config_t bd_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_bluedroid_init_with_cfg(&bd_cfg));
     ESP_ERROR_CHECK(esp_bluedroid_enable());
@@ -162,8 +162,8 @@ static void ble_init_scanner(void) {
         .scan_type = BLE_SCAN_TYPE_ACTIVE,
         .own_addr_type = BLE_ADDR_TYPE_PUBLIC,
         .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
-        .scan_interval = 0x80,  // Уменьшение чувствительности: реже сканируем (было 0x50)
-        .scan_window = 0x50,    // (было 0x30)
+        .scan_interval = 0x80, 
+        .scan_window = 0x50,    
         .scan_duplicate = BLE_SCAN_DUPLICATE_DISABLE
     };
     ESP_ERROR_CHECK(esp_ble_gap_set_scan_params(&scan_params));
@@ -185,7 +185,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t e
     }
 }
 
-// Инициализация Wi-Fi в режиме станции (STA)
+
 static void wifi_init_sta(void) {
     wifi_event_group = xEventGroupCreate();
 
@@ -215,12 +215,12 @@ static void wifi_init_sta(void) {
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
 }
 
-// Функция отправки данных о позиции на сервер
+
 static void send_position_data(double x, double y, const char *status) {
     char post_data[128];
     snprintf(post_data, sizeof(post_data), "{\"x\":%.2f,\"y\":%.2f,\"status\":\"%s\"}", x, y, status);
 
-    // Указываем полный URL, включая путь /post_position
+  
     esp_http_client_config_t config = {
         .url = SERVER_URL "/post_position", 
         .method = HTTP_METHOD_POST,
@@ -238,7 +238,7 @@ static void send_position_data(double x, double y, const char *status) {
     esp_http_client_cleanup(client);
 }
 
-// Главная задача: мониторинг маяков, расчет и отправка данных
+
 static void monitor_task(void *arg) {
     gpio_set_direction(BUZZER_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(BUZZER_PIN, 0);
@@ -260,10 +260,10 @@ static void monitor_task(void *arg) {
             vTaskDelay(pdMS_TO_TICKS(500));
             gpio_set_level(BUZZER_PIN, 0);
         } else {
-            // TxPower для маяков взят из их прошивок
+       
             double d1 = calculate_distance(beacons.rssi1, -42);
             double d2 = calculate_distance(beacons.rssi2, -70);
-            double d3 = calculate_distance(beacons.rssi3, -59);  // Для Beacon3 (сервер)
+            double d3 = calculate_distance(beacons.rssi3, -59);  
             trilaterate_position(&x, &y, d1, d2, d3);
             ESP_LOGI(TAG, "Pos(%.2f, %.2f) from d1=%.2fm, d2=%.2fm, d3=%.2fm", x, y, d1, d2, d3);
         }
@@ -274,7 +274,7 @@ static void monitor_task(void *arg) {
     }
 }
 
-// Главная функция приложения
+
 void app_main(void) {
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -291,4 +291,5 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Creating monitor task...");
     xTaskCreate(monitor_task, "monitor_task", 8192, NULL, 5, NULL);
+
 }
